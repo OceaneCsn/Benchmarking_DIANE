@@ -1,0 +1,4 @@
+library(DIANE)
+data("abiotic_stresses")
+data("gene_annotations")
+data("regulators_per_organism")
