@@ -6,22 +6,27 @@ net <- read.csv("data/network_edges_d0.03_lfc_1.5.csv")
 
 # TFs 
 
-tfs <- unique(net$from[!stringr::str_detect(net$from, "mean_")])
-grouped_tfs <- unique(net$from[stringr::str_detect(net$from, "mean_")])
-ungrouped_tfs <- unique(unlist(strsplit(stringr::str_remove(grouped_tfs, "mean_"), '-')))
+# tfs <- unique(net$from[!stringr::str_detect(net$from, "mean_")])
+# grouped_tfs <- unique(net$from[stringr::str_detect(net$from, "mean_")])
+# ungrouped_tfs <- unique(unlist(strsplit(stringr::str_remove(grouped_tfs, "mean_"), '-')))
+# 
+# regulators <- c(tfs, ungrouped_tfs)
+# 
+# # targets
+# 
+# targets <- unique(net$to[!stringr::str_detect(net$to, "mean_")])
+# grouped_targets <- unique(net$to[stringr::str_detect(net$to, "mean_")])
+# ungrouped_targets <- unique(unlist(strsplit(stringr::str_remove(grouped_targets, "mean_"), '-')))
+# 
+# genes <- c(targets, ungrouped_targets)
+# 
+# 
+# ### get list of TFs and target genes
+# 
+# DEGs <- read.csv("data/DEGs_M-MH.csv", sep = ';')
+# genes <- stringr::str_remove(DEGs$Gene_ID, '\\.[[::digit]]')
 
-regulators <- c(tfs, ungrouped_tfs)
+connecTF <- read.csv("data/connectf.csv")
+connecTF <- connecTF[,c("gene_id", "TARGET", "TECHNOLOGY.METHOD", "EXPERIMENT_TYPE")]
+validated <- igraph::graph_from_data_frame(connecTF, directed = TRUE, vertices = NULL)
 
-# targets
-
-targets <- unique(net$to[!stringr::str_detect(net$to, "mean_")])
-grouped_targets <- unique(net$to[stringr::str_detect(net$to, "mean_")])
-ungrouped_targets <- unique(unlist(strsplit(stringr::str_remove(grouped_targets, "mean_"), '-')))
-
-genes <- c(targets, ungrouped_targets)
-
-
-### get list of TFs and target genes
-
-DEGs <- read.csv("data/DEGs_M-MH.csv", sep = ';')
-genes <- stringr::str_remove(DEGs$Gene_ID, '\\.[[::digit]]')
