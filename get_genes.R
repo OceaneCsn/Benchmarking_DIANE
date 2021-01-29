@@ -19,3 +19,8 @@ genes <- stringr::str_split_fixed(topTags$table$genes, '\\.', 2)[,1]
 
 tfs <- intersect(genes, regulators_per_organism$`Arabidopsis thaliana`)
 targets <- genes
+
+
+
+write.table(targets, file = "data/targets.csv", quote = F, row.names = F)
+write.table(tfs, file = "data/tfs.csv", quote = F, row.names = F)
