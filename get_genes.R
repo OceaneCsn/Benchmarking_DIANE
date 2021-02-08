@@ -11,7 +11,7 @@ normalized_counts <- tcc_object$counts
 
 
 fit <- DIANE::estimateDispersion(tcc = tcc_object, conditions = abiotic_stresses$conditions)
-topTags <- DIANE::estimateDEGs(fit, reference = "M", perturbation = "MH", p.value = 0.05, lfc = 1.5)
+topTags <- DIANE::estimateDEGs(fit, reference = "C", perturbation = "H", p.value = 0.05, lfc = 1.5)
 
 # adding annotations
 genes <- stringr::str_split_fixed(topTags$table$genes, '\\.', 2)[,1]
@@ -22,5 +22,5 @@ targets <- genes
 
 
 
-write.table(targets, file = "data/targets.csv", quote = F, row.names = F)
-write.table(tfs, file = "data/tfs.csv", quote = F, row.names = F)
+write.table(targets, file = "data/targets_CH.csv", quote = F, row.names = F)
+write.table(tfs, file = "data/tfs_CH.csv", quote = F, row.names = F)
