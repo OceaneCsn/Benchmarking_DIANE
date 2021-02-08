@@ -143,31 +143,17 @@ validate_network <- function(net, no_dap = FALSE){
   return(validation_rate)
 }
 
-# N <- 10
-# nCores <- 32
-# nTrees <- 2000
-# 
-# lfcs <- c(2, 1.5)
-# densities <- c(0.03, 0.01)
-# fdrs <- c(0.05, 0.01)
-# strategies <- c("testing", "before_testing", "same_edges")
-# 
-# results <- setNames(expand.grid(strategies, densities, fdrs, lfcs), c("Strategy", "density", "fdr", "lfc"))
-# results <- results[rep(seq_len(nrow(results)), each = N), ]
-# results$precision <- NA
-
-
 
 # ___ Starts the benchmark ___ #
 
 benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
                       nShuffle = 1000, no_dap = FALSE,
-                      outfile = "benchmark_1000Trees_CvsH_withDap.csv"){
-  lfcs <- c(2, 1.5)
+                      outfile = "benchmark_1000Trees_CvsH_noDap_withEdges.csv"){
+  lfcs <- c(1.5)
   densities <- c(0.03, 0.01)
   
   close(file(outfile, open="w"))
-  to_store <- c("lfc", "density", "fdr", "strategy", "replicate", "precision")
+  to_store <- c("lfc", "density", "fdr", "Strategy", "replicate", "precision", "N_edges")
   write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
   
   for(lfc in lfcs){
@@ -185,12 +171,14 @@ benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
                                       nRegulators = nRegulators)
         n_after <- nrow(net)
         net_0.01 <- net[net$fdr <= 0.01,]
+        net_0.005 <- net[net$fdr <= 0.005,]
         n_after_0.01 <- nrow(net_0.01)
+        n_after_0.005 <- nrow(net_0.005)
         
         
         ## fdr 0.05
         precision <- validate_network(net, no_dap =no_dap)
-        to_store <- c(lfc, density, 0.05, "testing", i, precision)
+        to_store <- c(lfc, density, 0.05, "testing", i, precision, n_after)
         write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
         
         
@@ -200,7 +188,7 @@ benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
                            nCores = nCores, density = density, fdr = 0.05)
         
         precision <- validate_network(tmp$edges, no_dap =no_dap)
-        to_store <- c(lfc, density, 0.05, "before_testing", i, precision)
+        to_store <- c(lfc, density, 0.05, "before_testing", i, precision, n_before)
         write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
         
         # network same edges
@@ -208,13 +196,13 @@ benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
                            nCores = nCores, density = density, fdr = 0.05)
         
         precision <- validate_network(tmp$edges, no_dap =no_dap)
-        to_store <- c(lfc, density, 0.05, "same_edges", i, precision)
+        to_store <- c(lfc, density, 0.05, "same_edges", i, precision, n_after)
         write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
         
         ## fdr 0.01
         
         precision <- validate_network(net_0.01, no_dap =no_dap)
-        to_store <- c(lfc, density, 0.01, "testing", i, precision)
+        to_store <- c(lfc, density, 0.01, "testing", i, precision, nrow(net_0.01))
         write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
         
         # network before testing
@@ -222,7 +210,7 @@ benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
                            nCores = nCores, density = density, fdr = 0.05)
         
         precision <- validate_network(tmp$edges, no_dap =no_dap)
-        to_store <- c(lfc, density, 0.01, "before_testing", i, precision)
+        to_store <- c(lfc, density, 0.01, "before_testing", i, precision, n_before)
         write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
         
         # network same edges
@@ -230,7 +218,30 @@ benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
                            nCores = nCores, density = density, fdr = 0.05)
         
         precision <- validate_network(tmp$edges, no_dap =no_dap)
-        to_store <- c(lfc, density, 0.01, "same_edges", i, precision)
+        to_store <- c(lfc, density, 0.01, "same_edges", i, precision, nrow(net_0.01))
+        write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
+        
+        
+        ## fdr 0.005
+        
+        precision <- validate_network(net_0.005, no_dap =no_dap)
+        to_store <- c(lfc, density, 0.005, "testing", i, precision, nrow(net_0.005))
+        write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
+        
+        # network before testing
+        tmp <- get_network(nEdges = n_before, lfc = lfc, nTrees = nTrees, 
+                           nCores = nCores, density = density, fdr = 0.005)
+        
+        precision <- validate_network(tmp$edges, no_dap =no_dap)
+        to_store <- c(lfc, density, 0.005, "before_testing", i, precision, n_before)
+        write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
+        
+        # network same edges
+        tmp <- get_network(nEdges = n_after_0.005, lfc = lfc, nTrees = nTrees, 
+                           nCores = nCores, density = density, fdr = 0.005)
+        
+        precision <- validate_network(tmp$edges, no_dap =no_dap)
+        to_store <- c(lfc, density, 0.005, "same_edges", i, precision, nrow(net_0.005))
         write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
       }
     }
@@ -238,70 +249,4 @@ benchmark <- function(nTrees = 1000, nCores = 32, N = 15,
 }
 
 
-benchmark(nTrees = 1000, nCores = 40, N = 8, nShuffle = 1000, no_dap = FALSE)
-
-
-data <- read.csv("benchmark_1000Trees_CvsH_withDap.csv")
-
-
-library(ggplot2)
-library(ggpubr)
-
-
-ggplot(data, aes(color = strategy, fill = strategy, x = strategy, y = precision)) + 
-  geom_boxplot(size = 0.5, alpha = 0.3) + geom_jitter(size = 0.5)+ ylim(0.1,0.4) +
-  facet_wrap(~lfc + density + factor(fdr), nrow = 2) + scale_color_brewer(palette = "Set2") +
-  scale_fill_brewer(palette = "Set2") + stat_compare_means(
-    aes(x = strategy, y = precision),
-    comparisons = list(c("testing", "same_edges"), 
-                       c("testing", "before_testing")), method = "wilcox.test", paired = FALSE) + 
-  ggtitle("Precision on connecTF, C vs H genes, nTrees = 1000, nShuffle = 1000, N = 15, with dap seq")
-
- 
-
-# idees : augmenter nShuffle, changer liste de genes, pourquoi lfc 1.5, 3, 0.01?, valider avec Chip
-
-# validate_network(density = 0.03, lfc = 1.5)
-# 
-# res <- 
-# mean(res)
-# sd(res)
-# 
-# res <- sapply(1:N, validate_network, n_edges = 1418)
-# mean(res)
-# sd(res)
-# 
-# validate_network(density = 0.03, lfc = 1.5, fdr = 0.01)
-# res <- sapply(1:N, validate_network, n_edges = 239)
-# mean(res)
-# sd(res)
-# validate_network(density = 0.03, lfc = 1.5, fdr = 0.01, strat = "same_n_edges")
-# 
-# validate_network(density = 0.01, lfc = 1.5)
-# validate_network(density = 0.01, lfc = 1.5, strat = "no_tests")
-# validate_network(density = 0.01, lfc = 1.5, strat = "same_n_edges")
-# 
-# validate_network(density = 0.01, lfc = 1.5, fdr = 0.01)
-# validate_network(density = 0.01, lfc = 1.5, fdr = 0.01, strat = "same_n_edges")
-# 
-# 
-# 
-# 
-# validate_network(density = 0.03, lfc = 2)
-# validate_network(density = 0.03, lfc = 2, strat = "no_tests")
-# validate_network(density = 0.03, lfc = 2, strat = "same_n_edges")
-# 
-# 
-# validate_network(density = 0.03, lfc = 2, fdr = 0.01)
-# validate_network(density = 0.03, lfc = 2, fdr = 0.01, strat = "same_n_edges")
-# 
-# validate_network(density = 0.01, lfc = 2)
-# validate_network(density = 0.01, lfc = 2, strat = "no_tests")
-# validate_network(density = 0.01, lfc = 2, strat = "same_n_edges")
-# 
-# validate_network(density = 0.01, lfc = 2, fdr = 0.01)
-# validate_network(density = 0.01, lfc = 2, fdr = 0.01, strat = "same_n_edges")
-# 
-# read.csv("data/network_edges_d_0.03_lfc_1.5_no_tests.csv")
-
-
+benchmark(nTrees = 1000, nCores = 24, N = 10, nShuffle = 1000, no_dap = TRUE)

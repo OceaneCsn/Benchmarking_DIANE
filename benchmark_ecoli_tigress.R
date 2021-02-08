@@ -9,14 +9,7 @@ data("ecoli")
 nCores = 40
 nTrees = 1000
 
-
-
-# net1, 1643 genes, 195 reg, 805 conds, densities = 0.0025, 0.005, 0.01 in silico
-# net2, 2810 genes, 99 reg, 160 conds, densities = 0.0025, 0.005, 0.01 s aeorus : pas utilisable pour la validation!!!
-
-
-#get_nEdges(0.001, length(genes), length(regulators))
-
+ 
 
 #' Deals with grouped nodes of a network
 #' 
@@ -63,7 +56,7 @@ flatten_edges <- function(net){
 get_mat <- function(i, nCores = 40, nTrees = 1000){
   
   data <- ecoli$exp
-  
+  #d <-ecoli$reg
   data <- data[,str_detect(colnames(data), 'T0|T24|T48|T12|T36|T60')]
   colnames(data) <- str_replace(colnames(data), "_N", ".N")
   
@@ -195,7 +188,7 @@ validate_network <- function(net){
   
   print(paste(validated_edges, "edges were validated over the", validable_edges, "edges that had validation information."))
   print(paste("Validation rate :", round(validation_rate*100, 2), "%"))
-  return(c(validation_rate, recall))
+  return(c(validation_rate, recall, nrow(net)))
 }
 
 
@@ -232,19 +225,19 @@ validate_network_dream_gold <- function(net){
   
   print(paste(validated_edges, "edges were validated over the", validable_edges, "edges that had validation information."))
   print(paste("Validation rate :", round(validation_rate*100, 2), "%"))
-  return(c(validation_rate, recall))
+  return(c(validation_rate, recall, nrow(net)))
 }
 
 #validate_network_dream_gold(net)
   
 benchmark <- function(i, nTrees = 1000, nCores = 32, N = 15, nShuffle = 1000,
-                      outfile = paste0("ecoli_", nTrees, "Trees_",N,"N.csv")){
+                      outfile = paste0("ecoli_", nTrees, "Trees_",N,"N_withNedges.csv")){
   
-  densities <- c(0.0075, 0.005, 0.0025)
+  densities <- c(0.005, 0.0025)
   
-  # close(file(outfile, open="w"))
-  # to_store <- c("density", "fdr", "strategy", "replicate", "precision", "recall")
-  # write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
+  close(file(outfile, open="w"))
+  to_store <- c("density", "fdr", "Strategy", "replicate", "precision", "recall", "N_edges")
+  write(paste(to_store, collapse = ','), file=outfile, append=TRUE)
   
   for(density in densities){
     for(j in 1:N){
@@ -316,60 +309,4 @@ benchmark <- function(i, nTrees = 1000, nCores = 32, N = 15, nShuffle = 1000,
 }
 
 
-benchmark(nTrees = 1000, nCores = 40, N = 10)
-
-data <- read.csv("ecoli_100Trees_1N.csv")
-
-
-library(ggplot2)
-library(ggpubr)
-
-ggplot(data, aes(color = strategy, fill = strategy, x = strategy, y = precision)) + 
-  geom_point(size = 2, alpha = 0.9) +
-  facet_wrap(~density + factor(fdr), nrow = 2) + scale_color_brewer(palette = "Set2") +
-  scale_fill_brewer(palette = "Set2") + 
-  ggtitle("Precision on connecTF, C vs H genes, nTrees = 1000, nShuffle = 1000, N = 15, with dap seq")
-ggplot(data, aes(color = strategy, fill = strategy, x = strategy, y = recall)) + 
-  geom_point(size = 2, alpha = 0.9) +
-  facet_wrap(~density + factor(fdr), nrow = 2) + scale_color_brewer(palette = "Set2") +
-  scale_fill_brewer(palette = "Set2") + 
-  ggtitle("Precision on RegulonDB,nTrees = 1000, nShuffle = 1000, N = 10")
-
-
-data <- read.csv("ecoli_1000Trees_10N.csv")
-
-data <- data[data$fdr <0.1,]
-data <- data[data$density < 0.0075,]
-
-precision <- ggplot(data, aes(color = strategy, fill = strategy, x = strategy, y = precision)) + 
-  geom_boxplot(size = 0.5, alpha = 0.3) + geom_jitter(size = 0.5) + ylim(0.008,0.025) +
-  facet_wrap(~density + factor(fdr), nrow = 2) + scale_color_brewer(palette = "Set2") +
-  scale_fill_brewer(palette = "Set2") + stat_compare_means(
-    aes(x = strategy, y = precision),
-    comparisons = list(c("testing", "same n edges"), 
-                       c("testing", "before testing")), method = "wilcox.test", paired = FALSE) + 
-  ggtitle("Precision on RegulonDB") + labs(caption = "nTrees = 1000, nShuffle = 1000, N = 15")
- 
-recall <- ggplot(data, aes(color = strategy, fill = strategy, x = strategy, y = recall)) + 
-  geom_boxplot(size = 0.5, alpha = 0.3) + geom_jitter(size = 0.5)+ ylim(0.005,0.025)+
-  facet_wrap(~density + factor(fdr), nrow = 2) + scale_color_brewer(palette = "Set2") +
-  scale_fill_brewer(palette = "Set2") + stat_compare_means(
-    aes(x = strategy, y = recall),
-    comparisons = list(c("testing", "same n edges"), 
-                       c("testing", "before testing")), method = "wilcox.test", paired = FALSE) + 
-  ggtitle("Recall on RegulonDB") + labs(caption = "nTrees = 1000, nShuffle = 1000, N = 15")
-
-data$f1 <- 2/(1/data$precision + 1/data$recall)
-
-f1 <- ggplot(data, aes(color = strategy, fill = strategy, x = strategy, y = f1)) + 
-  geom_boxplot(size = 0.5, alpha = 0.3) + geom_jitter(size = 0.5)+ ylim(0.005,0.025)+
-  facet_wrap(~density + factor(fdr), nrow = 2) + scale_color_brewer(palette = "Set2") +
-  scale_fill_brewer(palette = "Set2") + stat_compare_means(
-    aes(x = strategy, y = f1),
-    comparisons = list(c("testing", "same n edges"), 
-                       c("testing", "before testing")), method = "wilcox.test", paired = FALSE) + 
-  ggtitle("F1 score on RegulonDB,nTrees = 1000, nShuffle = 1000, N = 10")
-f1
-
-library(patchwork)
-precision + recall
+benchmark(nTrees = 1000, nCores = 24, N = 10)
