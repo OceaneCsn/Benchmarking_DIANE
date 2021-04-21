@@ -6,7 +6,7 @@ We demonstrate in those scripts that testing regulator-gene pairs by perumtation
 
 This analysis is carried out on two datasets :
 
--   A. thaliana's response to heat, salinity and mannitoal stress, validated on the connecTF database.
+-   A. thaliana's response to heat, salinity and mannitol stress, validated on the connecTF database.
 
 -   E. coli's response to norfloaxacin in time, validated on the RegulonDB database.
 
